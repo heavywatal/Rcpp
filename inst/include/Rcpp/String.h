@@ -366,7 +366,7 @@ namespace Rcpp {
 
         inline SEXP get_sexp() const {
             RCPP_STRING_DEBUG_1("String::get_sexp const (valid = %d) ", valid);
-            return valid ? data : Rf_mkCharCE(buffer.c_str(), enc);
+            return valid ? data : Rf_mkCharLenCE(buffer.c_str(), buffer.size(), enc);
         }
 
         inline SEXP get_sexp() {
@@ -395,9 +395,12 @@ namespace Rcpp {
             enc = encoding;
 
             if (valid) {
-                data = Rcpp_ReplaceObject(data, Rf_mkCharCE(Rf_translateCharUTF8(data), encoding));
+                const void* vmax = vmaxget();
+                const char* translated = Rf_translateCharUTF8(data);
+                data = Rcpp_ReplaceObject(data, Rf_mkCharCE(translated, encoding));
+                vmaxset(vmax);
             } else {
-                data = Rf_mkCharCE(buffer.c_str(), encoding);
+                data = Rf_mkCharLenCE(buffer.c_str(), buffer.size(), encoding);
                 Rcpp_PreserveObject(data);
                 valid = true;
             }
@@ -469,7 +472,7 @@ namespace Rcpp {
         inline void setData() {
             RCPP_STRING_DEBUG("setData");
             if (!valid) {
-                data = Rf_mkCharCE(buffer.c_str(), enc);
+                data = Rf_mkCharLenCE(buffer.c_str(), buffer.size(), enc);
                 Rcpp_PreserveObject(data);
                 valid = true;
             }
